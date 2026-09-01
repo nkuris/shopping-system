@@ -1,0 +1,24 @@
+# Node
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+
+# Build / output
+dist/
+lib/
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# Env
+.env
+.env.local
+
+# Logs / cache
+logs/
+*.log
+.cache/
+
+# Editor
+.vscode/
+.DS_Store
