@@ -10,7 +10,27 @@ services:
       - "1433:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
-    # Healthcheck removed because sqlcmd is not present in the image; rely on container running state
+    healthcheck:
+      test: ["CMD-SHELL", "for i in $(seq 1 30); do (echo > /dev/tcp/localhost/1433) >/dev/null 2>&1 && exit 0 || sleep 1; done; exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  sqlserver-setup:
+    image: mcr.microsoft.com/mssql-tools:latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      - SA_PASSWORD=BlueMonday2@
+    volumes:
+      - ./mssql/init:/scripts:ro
+    entrypoint: ["/bin/bash","-c"]
+    command: |
+      for i in $(seq 1 30); do
+        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "$SA_PASSWORD" -i /scripts/init.sql && exit 0 || sleep 1
+      done
+      echo "Failed to run init script after multiple attempts"; exit 1
 
   mongo:
     image: mongo:6.0
@@ -30,8 +50,13 @@ services:
       dockerfile: Dockerfile
     environment:
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=CatalogDb;User Id=sa;Password=BlueMonday2@;TrustServerCertificate=True;Encrypt=False;
+      - DB_MIGRATION_RETRIES=30
+      - DB_MIGRATION_DELAY_SECONDS=2
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
+      sqlserver-setup:
+        condition: service_completed_successfully
     ports:
       - "5000:80"
 
