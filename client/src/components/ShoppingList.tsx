@@ -12,6 +12,7 @@ interface ShoppingListProps {
 
 export const ShoppingList: React.FC<ShoppingListProps> = ({ onNextScreen }) => {
     const [categories, setCategories] = useState<Category[]>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState<boolean>(false);
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [quantity, setQuantity] = useState<number>(1);
@@ -21,9 +22,11 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({ onNextScreen }) => {
 
     useEffect(() => {
         // Replace URL/port with your local CatalogService URL
+        setIsLoadingCategories(true);
         axios.get<Category[]>('http://localhost:5000/api/categories')
             .then(res => setCategories(res.data))
-            .catch(err => console.error('Failed fetching categories:', err));
+            .catch(err => console.error('Failed fetching categories:', err))
+            .finally(() => setIsLoadingCategories(false));
     }, []);
 
     const currentCategoryObj = categories.find(c => c.id === selectedCategory);
@@ -43,9 +46,10 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({ onNextScreen }) => {
             </div>
 
             {/* Category Dropdown */}
-            <div>
+            <div className="category-row">
                 <label>בחר קטגוריה: </label>
-                <select onChange={(e) => {
+                {isLoadingCategories && <span className="spinner" aria-hidden="true" />}
+                <select disabled={isLoadingCategories} onChange={(e) => {
                     const val = e.target.value;
                     setSelectedCategory(val === '' ? null : Number(val));
                     setSelectedProduct(null);
