@@ -48,7 +48,12 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({ onNextScreen }) => {
             {/* Category Dropdown */}
             <div className="category-row">
                 <label>בחר קטגוריה: </label>
-                {isLoadingCategories && <span className="spinner" aria-hidden="true" />}
+                {isLoadingCategories && (
+                    <>
+                        <span className="spinner" aria-hidden="true" />
+                        <span className="loading-text">טוען קטגוריות...</span>
+                    </>
+                )}
                 <select disabled={isLoadingCategories} onChange={(e) => {
                     const val = e.target.value;
                     setSelectedCategory(val === '' ? null : Number(val));
