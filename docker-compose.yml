@@ -9,10 +9,12 @@ services:
       - "1433:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
-    # Healthcheck removed: the container's internal shell lacks a reliable /dev/tcp or required tools
-    # on some hosts which caused false 'unhealthy' state. The application includes a robust
-    # migration-retry loop so it will wait for the DB to be reachable. Remove this block if you
-    # want to reintroduce a more reliable healthcheck later.
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo >/dev/tcp/127.0.0.1/1433' >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   # sqlserver-setup removed: DB creation/initialization is handled by the application migrations
   # or by running the init script manually. This avoids an extra one-shot container that
