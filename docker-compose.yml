@@ -1,0 +1,66 @@
+version: "3.8"
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "BlueMonday2@"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    # Healthcheck removed because sqlcmd is not present in the image; rely on container running state
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand({ping:1})"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  catalogservice:
+    build:
+      context: ./CatalogService
+      dockerfile: Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=CatalogDb;User Id=sa;Password=BlueMonday2@;TrustServerCertificate=True;Encrypt=False;
+    depends_on:
+      - sqlserver
+    ports:
+      - "5000:80"
+
+  orderservice:
+    build:
+      context: ./OrderService
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/shopping_orders_db
+      - PORT=5001
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    environment:
+      - REACT_APP_CATALOG_URL=http://catalogservice:80
+      - REACT_APP_ORDER_URL=http://orderservice:5001
+    ports:
+      - "3000:80"
+    depends_on:
+      - catalogservice
+      - orderservice
+
+volumes:
+  sqlserver-data:
+  mongo-data:

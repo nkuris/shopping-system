@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../app/cartSlice';
 import type { RootState } from '../app/store';
 import type { Category, Product } from '../types';
+import './ShoppingList.css';
 
 interface ShoppingListProps {
     onNextScreen: () => void;
@@ -35,8 +36,11 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({ onNextScreen }) => {
     };
 
     return (
-        <div style={{ direction: 'rtl', padding: '20px' }}>
-            <h2>רשימת קניות</h2>
+        <div className="shopping-list">
+            <div className="hero">
+                <h2 style={{ margin: 0 }}>רשימת קניות</h2>
+                <div style={{ fontSize: '0.95rem', color: '#555' }}>בחרו קטגוריה, בחרו מוצר והוסיפו לסל</div>
+            </div>
 
             {/* Category Dropdown */}
             <div>
@@ -55,48 +59,52 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({ onNextScreen }) => {
 
             {/* Product Dropdown & Quantity */}
             {currentCategoryObj && (
-                <div style={{ marginTop: '10px' }}>
-                    <label>בחר מוצר: </label>
-                    <select onChange={(e) => {
-                        const val = e.target.value;
-                        const prod = currentCategoryObj.products.find(p => p.id === Number(val));
-                        setSelectedProduct(prod || null);
-                    }}>
-                        <option value="">-- בחר --</option>
-                        {currentCategoryObj.products.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                    </select>
+                <div className="controls">
+                    <div>
+                        <label>בחר מוצר: </label>
+                        <select onChange={(e) => {
+                            const val = e.target.value;
+                            const prod = currentCategoryObj.products.find(p => p.id === Number(val));
+                            setSelectedProduct(prod || null);
+                        }}>
+                            <option value="">-- בחר --</option>
+                            {currentCategoryObj.products.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <input
-                        type="number"
-                        min="1"
-                        value={quantity}
-                        onChange={(e) => setQuantity(Number(e.target.value))}
-                        style={{ width: '50px', marginRight: '10px' }}
-                    />
+                    <div>
+                        <input
+                            type="number"
+                            min="1"
+                            value={quantity}
+                            onChange={(e) => setQuantity(Number(e.target.value))}
+                            style={{ width: '80px' }}
+                        />
+                    </div>
 
-                    <button onClick={handleAdd} disabled={!selectedProduct} style={{ marginRight: '10px' }}>
+                    <button className="add-button" onClick={handleAdd} disabled={!selectedProduct}>
                         הוסף מוצר לסל
                     </button>
                 </div>
             )}
 
             {/* Selected Items Display grouped by category */}
-            <div style={{ marginTop: '20px', borderTop: '1px solid #ccc', paddingTop: '10px' }}>
+            <div className="cart">
                 <h3>עגלת הקניות</h3>
+                {cartItems.length === 0 && <div style={{ color: '#666' }}>העגלה ריקה</div>}
                 {cartItems.map(item => (
-                    <div key={item.product.id}>
-                        {item.product.name} - {item.quantity}
+                    <div className="cart-item" key={item.product.id}>
+                        <div>{item.product.name}</div>
+                        <div>{item.quantity}</div>
                     </div>
                 ))}
-            </div>
 
-            {cartItems.length > 0 && (
-                <button onClick={onNextScreen} style={{ marginTop: '20px' }}>
+                <button className="checkout-button" onClick={onNextScreen} disabled={cartItems.length === 0}>
                     המשך הזמנה
                 </button>
-            )}
+            </div>
         </div>
     );
 };
